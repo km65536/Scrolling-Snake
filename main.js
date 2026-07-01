@@ -9,6 +9,7 @@ const segments = [];
 // 移動速度と進行方向（1は右、-1は左）
 let speed = 5;
 let directionX = 1;
+let acceleration = 1;
 
 // 画面サイズに合わせてキャンバスをリサイズし、パーツの位置を設定する関数
 function resizeCanvas() {
