@@ -9,7 +9,7 @@ const segments = [];
 // 速度、加速度、ゲームオーバー状態の変数
 let velocityX = 0;
 let acceleration = 0.50; // 1フレームあたりの速度変化量
-let isGameOver = false;
+let isGameOver = true;
 
 // 画面サイズに合わせてキャンバスをリサイズし、パーツの位置を設定する関数
 function resizeCanvas() {
@@ -123,7 +123,7 @@ function draw() {
     ctx.beginPath();
     // ゲームオーバー時は線の色を赤色に変更、プレイ中はネオン風の鮮やかな水色
     ctx.strokeStyle = isGameOver ? '#ff0033' : '#00ffcc';
-    ctx.lineWidth = 10;          // 線の太さ
+    ctx.lineWidth = 2;          // 線の太さ
     ctx.lineCap = 'round';       // 線の端を丸くする
     ctx.lineJoin = 'round';      // 線の結合部を丸くする
     
