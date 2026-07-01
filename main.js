@@ -6,10 +6,10 @@ const segmentCount = 30;
 // 各パーツの座標を保持する配列
 const segments = [];
 
-// 移動速度と進行方向（1は右、-1は左）
-let speed = 5;
-let directionX = 1;
-let acceleration = 1;
+// 速度、加速度、ゲームオーバー状態の変数
+let velocityX = 0;
+let acceleration = 0.15; // 1フレームあたりの速度変化量
+let isGameOver = false;
 
 // 画面サイズに合わせてキャンバスをリサイズし、パーツの位置を設定する関数
 function resizeCanvas() {
@@ -45,12 +45,16 @@ resizeCanvas();
 
 // --- タッチイベントの処理 ---
 
-// タッチ開始時（タップした瞬間に進行方向を反転させる）
+// タッチ開始時（タップした瞬間に加速度の向きを反転させる）
 canvas.addEventListener('touchstart', (e) => {
     // ブラウザのデフォルト挙動（スクロールなど）を防止
     e.preventDefault();
-    // 進行方向を反転する（1なら-1に、-1なら1になる）
-    directionX *= -1;
+    
+    // ゲームオーバー時は操作を受け付けない
+    if (isGameOver) return;
+    
+    // 加速度の向きを反転（正なら負に、負なら正になる）
+    acceleration *= -1;
 }, { passive: false });
 
 // タッチが離れた時（スクロール防止などのために残しておく）
@@ -62,16 +66,19 @@ canvas.addEventListener('touchend', (e) => {
 
 // データ状態の更新
 function update() {
-    // 1. 最先端のパーツ（頭）は、現在の進行方向に向かって一定速度で進む
-    segments[0].x += speed * directionX;
+    // ゲームオーバー時は更新処理を停止
+    if (isGameOver) return;
+
+    // 1. 速度に加速度を加算し、最先端のパーツ（頭）のX座標を更新する
+    velocityX += acceleration;
+    segments[0].x += velocityX;
     
-    // 画面端の壁判定（画面外に出ないように跳ね返る処理）
-    if (segments[0].x < 0) {
-        segments[0].x = 0;
-        directionX = 1; // 左端にぶつかったら右へ反転
-    } else if (segments[0].x > canvas.width) {
-        segments[0].x = canvas.width;
-        directionX = -1; // 右端にぶつかったら左へ反転
+    // 壁判定（画面外に出たらゲームオーバー）
+    if (segments[0].x < 0 || segments[0].x > canvas.width) {
+        isGameOver = true;
+        // 画面外に完全に消えないよう、壁際で座標を固定する
+        if (segments[0].x < 0) segments[0].x = 0;
+        if (segments[0].x > canvas.width) segments[0].x = canvas.width;
     }
     
     // 2. 2番目以降のパーツは、それぞれ「1つ前のパーツのX座標」を追いかける
@@ -94,7 +101,8 @@ function draw() {
     
     // ウニョウニョ動く線の描画設定
     ctx.beginPath();
-    ctx.strokeStyle = '#00ffcc'; // ネオン風の鮮やかな水色
+    // ゲームオーバー時は線の色を赤色に変更、プレイ中はネオン風の鮮やかな水色
+    ctx.strokeStyle = isGameOver ? '#ff0033' : '#00ffcc';
     ctx.lineWidth = 10;          // 線の太さ
     ctx.lineCap = 'round';       // 線の端を丸くする
     ctx.lineJoin = 'round';      // 線の結合部を丸くする
@@ -116,11 +124,20 @@ function draw() {
     ctx.lineTo(segments[segmentCount - 1].x, segments[segmentCount - 1].y);
     ctx.stroke();
     
-    // プレイヤーが操作している箇所（頭）が分かりやすくなるよう、先端に白い点を描画
+    // プレイヤーが操作している箇所（頭）が分かりやすくなるよう、先端に点を描画
     ctx.beginPath();
     ctx.fillStyle = '#ffffff';
     ctx.arc(segments[0].x, segments[0].y, 5, 0, Math.PI * 2);
     ctx.fill();
+
+    // ゲームオーバー時のテキスト描画
+    if (isGameOver) {
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 40px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2);
+    }
 }
 
 // メインゲームループの駆動
