@@ -43,7 +43,7 @@ resizeCanvas();
 
 // --- タッチイベントの処理 ---
 
-// タッチ開始時
+// タッチ開始時（タップした瞬間のみX座標を更新する）
 canvas.addEventListener('touchstart', (e) => {
     // ブラウザのデフォルト挙動（スクロールなど）を防止
     e.preventDefault();
@@ -53,19 +53,9 @@ canvas.addEventListener('touchstart', (e) => {
     }
 }, { passive: false });
 
-// タッチしたまま動かした時（スワイプ）
-canvas.addEventListener('touchmove', (e) => {
-    e.preventDefault();
-    if (e.touches.length > 0) {
-        // 動いている指のX座標をリアルタイムに更新
-        targetX = e.touches[0].clientX;
-    }
-}, { passive: false });
-
-// タッチが離れた時
+// タッチが離れた時（スクロール防止などのために残しておく）
 canvas.addEventListener('touchend', (e) => {
     e.preventDefault();
-    // 必要に応じて指を離した瞬間の処理をここに記述（現在は最後のX座標を維持）
 }, { passive: false });
 
 // --- ゲームループの処理 ---
@@ -73,7 +63,7 @@ canvas.addEventListener('touchend', (e) => {
 // データ状態の更新
 function update() {
     // 1. 最先端のパーツ（頭）は、タッチされたターゲットX座標に向かって滑らかに近づく
-    // 0.3 は追従の速さ。数値を大きくすると手の動きにカチッと張り付き、小さくすると滑らかに遅れて動く
+    // 0.3 は追従の速さ。数値を大きくすると速く動き、小さくするとゆっくり動く
     segments[0].x += (targetX - segments[0].x) * 0.3;
     
     // 2. 2番目以降のパーツは、それぞれ「1つ前のパーツのX座標」を追いかける
