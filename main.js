@@ -8,7 +8,7 @@ const segments = [];
 
 // 速度、加速度、ゲームオーバー状態の変数
 let velocityX = 0;
-let acceleration = 0.15; // 1フレームあたりの速度変化量
+let acceleration = 0.50; // 1フレームあたりの速度変化量
 let isGameOver = false;
 
 // 画面サイズに合わせてキャンバスをリサイズし、パーツの位置を設定する関数
@@ -43,17 +43,37 @@ window.addEventListener('resize', resizeCanvas);
 // 初回のキャンバスサイズ・パーツ位置を設定
 resizeCanvas();
 
+// ゲームを初期状態にリセットする関数
+function resetGame() {
+    velocityX = 0;
+    acceleration = 0.15;
+    isGameOver = false;
+    
+    const startY = canvas.height * 0.5;
+    const endY = canvas.height * 0.9;
+    const spacing = (endY - startY) / (segmentCount - 1);
+    const centerX = canvas.width / 2;
+    
+    for (let i = 0; i < segmentCount; i++) {
+        segments[i].x = centerX;
+        segments[i].y = startY + i * spacing;
+    }
+}
+
 // --- タッチイベントの処理 ---
 
-// タッチ開始時（タップした瞬間に加速度の向きを反転させる）
+// タッチ開始時
 canvas.addEventListener('touchstart', (e) => {
     // ブラウザのデフォルト挙動（スクロールなど）を防止
     e.preventDefault();
     
-    // ゲームオーバー時は操作を受け付けない
-    if (isGameOver) return;
+    // ゲームオーバー時は、タップでゲームをリセットして再開する
+    if (isGameOver) {
+        resetGame();
+        return;
+    }
     
-    // 加速度の向きを反転（正なら負に、負なら正になる）
+    // プレイ中は加速度の向きを反転（正なら負に、負なら正になる）
     acceleration *= -1;
 }, { passive: false });
 
@@ -86,7 +106,7 @@ function update() {
     for (let i = 1; i < segmentCount; i++) {
         // 0.25 は胴体の連動スピード。遅延を大きくしたい場合はこの数値を下げる
         const followSpeed = 0.25;
-        segments[i].x += segments[i - 1].x - segments[i].x;
+        segments[i].x += (segments[i - 1].x - segments[i].x) * followSpeed;
     }
 }
 
@@ -136,7 +156,10 @@ function draw() {
         ctx.font = 'bold 40px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2);
+        ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2 - 50);
+        
+        ctx.font = '20px sans-serif';
+        ctx.fillText('Tap to Restart', canvas.width / 2, canvas.height / 2 + 10);
     }
 }
 
