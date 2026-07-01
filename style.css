@@ -9,7 +9,6 @@ html, body {
     height: 100%;
     overflow: hidden;
     background-color: #1a1a1a;
-    /* スマホでの画面スクロールやダブルタップズーム、ピンチイン・アウトを完全に禁止 */
     touch-action: none;
     -webkit-user-select: none;
     user-select: none;
