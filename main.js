@@ -6,10 +6,12 @@ const segmentCount = 30;
 // 各パーツの座標を保持する配列
 const segments = [];
 
-// 速度、加速度、ゲームオーバー状態の変数
+// 速度、加速度、ゲーム状態の変数
 let velocityX = 0;
 let acceleration = 0.75; // 1フレームあたりの速度変化量
-let isGameOver = false;
+
+// 状態管理: 'start' (開始待ち), 'playing' (プレイ中), 'gameover' (ゲームオーバー)
+let gameState = 'start';
 
 // 画面サイズに合わせてキャンバスをリサイズし、パーツの位置を設定する関数
 function resizeCanvas() {
@@ -43,11 +45,11 @@ window.addEventListener('resize', resizeCanvas);
 // 初回のキャンバスサイズ・パーツ位置を設定
 resizeCanvas();
 
-// ゲームを初期状態にリセットする関数
+// ゲームを初期状態にリセットして開始する関数
 function resetGame() {
     velocityX = 0;
     acceleration = 0.75;
-    isGameOver = false;
+    gameState = 'playing';
     
     const startY = canvas.height * 0.5;
     const endY = canvas.height * 0.9;
@@ -67,8 +69,14 @@ canvas.addEventListener('touchstart', (e) => {
     // ブラウザのデフォルト挙動（スクロールなど）を防止
     e.preventDefault();
     
+    // 開始待ち画面の場合はプレイ状態に移行
+    if (gameState === 'start') {
+        gameState = 'playing';
+        return;
+    }
+    
     // ゲームオーバー時は、タップでゲームをリセットして再開する
-    if (isGameOver) {
+    if (gameState === 'gameover') {
         resetGame();
         return;
     }
@@ -86,8 +94,8 @@ canvas.addEventListener('touchend', (e) => {
 
 // データ状態の更新
 function update() {
-    // ゲームオーバー時は更新処理を停止
-    if (isGameOver) return;
+    // プレイ中以外は更新処理を行わない
+    if (gameState !== 'playing') return;
 
     // 1. 速度に加速度を加算し、最先端のパーツ（頭）のX座標を更新する
     velocityX += acceleration;
@@ -95,7 +103,7 @@ function update() {
     
     // 壁判定（画面外に出たらゲームオーバー）
     if (segments[0].x < 0 || segments[0].x > canvas.width) {
-        isGameOver = true;
+        gameState = 'gameover';
         // 画面外に完全に消えないよう、壁際で座標を固定する
         if (segments[0].x < 0) segments[0].x = 0;
         if (segments[0].x > canvas.width) segments[0].x = canvas.width;
@@ -121,9 +129,9 @@ function draw() {
     
     // ウニョウニョ動く線の描画設定
     ctx.beginPath();
-    // ゲームオーバー時は線の色を赤色に変更、プレイ中はネオン風の鮮やかな水色
-    ctx.strokeStyle = isGameOver ? '#ff0033' : '#00ffcc';
-    ctx.lineWidth = 2;          // 線の太さを2に変更
+    // ゲームオーバー時は線の色を赤色に変更、それ以外はネオン風の鮮やかな水色
+    ctx.strokeStyle = (gameState === 'gameover') ? '#ff0033' : '#00ffcc';
+    ctx.lineWidth = 2;          // 線の太さ
     ctx.lineCap = 'round';       // 線の端を丸くする
     ctx.lineJoin = 'round';      // 線の結合部を丸くする
     
@@ -144,8 +152,14 @@ function draw() {
     ctx.lineTo(segments[segmentCount - 1].x, segments[segmentCount - 1].y);
     ctx.stroke();
 
-    // ゲームオーバー時のテキスト描画
-    if (isGameOver) {
+    // テキスト描画（状態に応じたメッセージ）
+    if (gameState === 'start') {
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '20px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('Tap to Start', canvas.width / 2, canvas.height / 2);
+    } else if (gameState === 'gameover') {
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 40px sans-serif';
         ctx.textAlign = 'center';
