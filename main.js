@@ -9,7 +9,7 @@ const segments = [];
 // 速度、加速度、ゲームオーバー状態の変数
 let velocityX = 0;
 let acceleration = 0.75; // 1フレームあたりの速度変化量
-let isGameOver = true;
+let isGameOver = false;
 
 // 画面サイズに合わせてキャンバスをリサイズし、パーツの位置を設定する関数
 function resizeCanvas() {
@@ -105,7 +105,7 @@ function update() {
     // これにより、y座標が固定されたまま、x座標の変化が後ろへ伝播し「ウニョウニョ」とした波が生まれる
     for (let i = 1; i < segmentCount; i++) {
         // followSpeedは胴体の連動スピード。遅延を大きくしたい場合はこの数値を下げる
-        const followSpeed = 0.9;
+        const followSpeed = 0.25;
         segments[i].x += (segments[i - 1].x - segments[i].x) * followSpeed;
     }
 }
@@ -123,7 +123,7 @@ function draw() {
     ctx.beginPath();
     // ゲームオーバー時は線の色を赤色に変更、プレイ中はネオン風の鮮やかな水色
     ctx.strokeStyle = isGameOver ? '#ff0033' : '#00ffcc';
-    ctx.lineWidth = 2;          // 線の太さ
+    ctx.lineWidth = 2;          // 線の太さを2に変更
     ctx.lineCap = 'round';       // 線の端を丸くする
     ctx.lineJoin = 'round';      // 線の結合部を丸くする
     
@@ -143,7 +143,6 @@ function draw() {
     // 最後のパーツに向けて直線を結んでストロークを完了させる
     ctx.lineTo(segments[segmentCount - 1].x, segments[segmentCount - 1].y);
     ctx.stroke();
-    
 
     // ゲームオーバー時のテキスト描画
     if (isGameOver) {
