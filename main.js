@@ -86,7 +86,7 @@ function update() {
     for (let i = 1; i < segmentCount; i++) {
         // 0.25 は胴体の連動スピード。遅延を大きくしたい場合はこの数値を下げる
         const followSpeed = 0.25;
-        segments[i].x += (segments[i - 1].x - segments[i].x) * followSpeed;
+        segments[i].x += segments[i - 1].x - segments[i].x;
     }
 }
 
