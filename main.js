@@ -96,7 +96,13 @@ canvas.addEventListener('touchend', (e) => {
 function update() {
     // プレイ中以外は更新処理を行わない
     if (gameState !== 'playing') return;
-
+    
+    // 2. 2番目以降のパーツは、それぞれ「1つ前のパーツのX座標」を追いかける
+    // これにより、y座標が固定されたまま、x座標の変化が後ろへ伝播し「ウニョウニョ」とした波が生まれる
+    for (let i = segmentCount-1; i > 0; i--) {
+        segments[i].x = segments[i - 1].x;
+    }
+    
     // 1. 速度に加速度を加算し、最先端のパーツ（頭）のX座標を更新する
     velocityX += acceleration;
     segments[0].x += velocityX;
@@ -107,14 +113,6 @@ function update() {
         // 画面外に完全に消えないよう、壁際で座標を固定する
         if (segments[0].x < 0) segments[0].x = 0;
         if (segments[0].x > canvas.width) segments[0].x = canvas.width;
-    }
-    
-    // 2. 2番目以降のパーツは、それぞれ「1つ前のパーツのX座標」を追いかける
-    // これにより、y座標が固定されたまま、x座標の変化が後ろへ伝播し「ウニョウニョ」とした波が生まれる
-    for (let i = 1; i < segmentCount; i++) {
-        // followSpeedは胴体の連動スピード。遅延を大きくしたい場合はこの数値を下げる
-        const followSpeed = 0.25;
-        segments[i].x += (segments[i - 1].x - segments[i].x) * followSpeed;
     }
 }
 
