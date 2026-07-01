@@ -8,7 +8,7 @@ const segments = [];
 
 // 速度、加速度、ゲームオーバー状態の変数
 let velocityX = 0;
-let acceleration = 0.50; // 1フレームあたりの速度変化量
+let acceleration = 1.00; // 1フレームあたりの速度変化量
 let isGameOver = true;
 
 // 画面サイズに合わせてキャンバスをリサイズし、パーツの位置を設定する関数
