@@ -8,7 +8,7 @@ const segments = [];
 
 // 速度、加速度、ゲームオーバー状態の変数
 let velocityX = 0;
-let acceleration = 1.00; // 1フレームあたりの速度変化量
+let acceleration = 0.75; // 1フレームあたりの速度変化量
 let isGameOver = true;
 
 // 画面サイズに合わせてキャンバスをリサイズし、パーツの位置を設定する関数
@@ -46,7 +46,7 @@ resizeCanvas();
 // ゲームを初期状態にリセットする関数
 function resetGame() {
     velocityX = 0;
-    acceleration = 1.00;
+    acceleration = 0.75;
     isGameOver = false;
     
     const startY = canvas.height * 0.5;
@@ -105,7 +105,7 @@ function update() {
     // これにより、y座標が固定されたまま、x座標の変化が後ろへ伝播し「ウニョウニョ」とした波が生まれる
     for (let i = 1; i < segmentCount; i++) {
         // followSpeedは胴体の連動スピード。遅延を大きくしたい場合はこの数値を下げる
-        const followSpeed = 1.00;
+        const followSpeed = 0.9;
         segments[i].x += (segments[i - 1].x - segments[i].x) * followSpeed;
     }
 }
@@ -144,11 +144,6 @@ function draw() {
     ctx.lineTo(segments[segmentCount - 1].x, segments[segmentCount - 1].y);
     ctx.stroke();
     
-    // プレイヤーが操作している箇所（頭）が分かりやすくなるよう、先端に点を描画
-    ctx.beginPath();
-    ctx.fillStyle = '#ffffff';
-    ctx.arc(segments[0].x, segments[0].y, 5, 0, Math.PI * 2);
-    ctx.fill();
 
     // ゲームオーバー時のテキスト描画
     if (isGameOver) {
