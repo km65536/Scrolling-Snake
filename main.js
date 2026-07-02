@@ -1,23 +1,28 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-// プレイヤーを構成するパーツ（セグメント）の総数
+// プレイヤーを構成するパーツの総数
 const segmentCount = 30;
 
 // X座標とY座標を完全に別の配列として管理する
 const segmentsX = [];
 const segmentsY = [];
 
-// --- 変更点：蛇の速度と壁の速度を1つの変数に統合 ---
-let gameSpeed = 5; // 蛇の進むスピード（間隔）と壁の流れるスピードを統括
+// 蛇の速度と壁の速度を1つの変数に統合
+let gameSpeed = 5; // 蛇の進むスピードと壁の流れるスピードを統括
 
 // 速度、加速度、ゲーム状態の変数
-let startX = 0;
 let velocityX = 0;
 let accelerationX = 0.75; // 1フレームあたりの速度変化量
 
 // 状態管理: 'start' (開始待ち), 'playing' (プレイ中), 'gameover' (ゲームオーバー)
 let gameState = 'start';
+
+// レイアウト用の変数 ---
+let startX = 0;
+let startY = 0;
+let centerX = 0;
+let spacing = 0;
 
 // --- 壁とスコアの変数 ---
 let walls = [];
@@ -25,15 +30,12 @@ let score = 0;
 const wallHeight = 2; // 壁の厚さ
 let gapWidth = 0;  // 通り抜けられる穴の幅
 
-// 現在の画面サイズに基づいて、必要な座標や間隔を計算して返す
+// 現在の画面サイズに基づいて、グローバル変数に座標や間隔を上書きする関数
 function calculateLayout() {
-    const startY = canvas.height * 0.5; // 開始位置（頭のy座標：画面中央）
-    const centerX = canvas.width / 2;
-    
-    // 蛇の縦の間隔（spacing）を、ゲーム全体のスピード（gameSpeed）と同期させる
-    const spacing = gameSpeed; 
-    
-    return { startY, spacing, centerX };
+    startY = canvas.height * 0.5; // 開始位置
+    centerX = canvas.width / 2;
+    // 蛇の縦の間隔を、ゲーム全体のスピードと同期させる
+    spacing = gameSpeed; 
 }
 
 // 画面サイズに合わせてキャンバスをリサイズし、パーツの位置を設定する関数
@@ -44,20 +46,20 @@ function resizeCanvas() {
     // 穴の幅を画面の横幅の1/6と、60pxの大きいほうに設定
     gapWidth = Math.max(canvas.width / 6, 60);
     
-    // 共通関数から計算結果を受け取る
-    const layout = calculateLayout();
+    // ここで座標を上書きする
+    calculateLayout();
     
     // Y座標はリサイズ時にしか変わらないため、ここで計算して配列を埋め尽くす
     segmentsY.length = 0;
     for (let i = 0; i < segmentCount; i++) {
-        segmentsY.push(layout.startY + i * layout.spacing);
+        segmentsY.push(startY + i * spacing);
     }
     
     if (segmentsX.length === 0) {
         // 初回起動時：x座標を画面中央にして配置
-        startX = layout.centerX;
+        startX = centerX;
         for (let i = 0; i < segmentCount; i++) {
-            segmentsX.push(layout.centerX);
+            segmentsX.push(centerX);
         }
     }
 }
@@ -69,7 +71,7 @@ resizeCanvas();
 
 // --- 壁を生成する関数 ---
 function spawnWall() {
-    // 穴のX座標をランダムに決定（画面外にはみ出ないように計算）
+    // 穴のX座標をランダムに決定
     const gapX = Math.random() * (canvas.width - gapWidth);
     walls.push({
         y: -wallHeight, // 画面の上端から出現させる
@@ -88,21 +90,21 @@ function resetGame() {
     walls = [];
     score = 0;
     
-    // 共通関数から現在の画面サイズに合った計算結果を受け取る
-    const layout = calculateLayout();
+    // リセット時に最新の画面サイズで座標を上書きする
+    calculateLayout();
 
-    startX = layout.centerX;
+    startX = centerX;
     
     // Y座標はリサイズ時に計算されているため、X座標の配列だけをリセットすればOK
     segmentsX.length = 0;
     for (let i = 0; i < segmentCount; i++) {
-        segmentsX.push(layout.centerX);
+        segmentsX.push(centerX);
     }
 }
 
 // --- 入力処理（タップとEnterキーで共通） ---
 function handleInput(e) {
-    // デフォルト挙動（スクロールなど）を防止（イベントが存在し、キャンセル可能な場合のみ）
+    // デフォルト挙動を防止
     if (e && e.cancelable) {
         e.preventDefault();
     }
@@ -119,7 +121,7 @@ function handleInput(e) {
         return;
     }
     
-    // プレイ中は加速度の向きを反転（正なら負に、負なら正になる）
+    // プレイ中は加速度の向きを反転
     accelerationX *= -1;
 }
 
@@ -152,17 +154,13 @@ function update() {
     // プレイ中以外は更新処理を行わない
     if (gameState !== 'playing') return;
     
-    // 1. 速度に加速度を加算し、最先端のパーツ（頭）のX座標を更新する
+    // 1. 速度に加速度を加算し、最先端のパーツのX座標を更新する
     velocityX += accelerationX;
     startX += velocityX;
     
     // 最新のX座標を配列の先頭に追加し、はみ出した末尾を削除するだけで、全体が1つ後ろへズレる
     segmentsX.unshift(startX);
     segmentsX.pop();
-    
-    // 頭のX座標とY座標（当たり判定用）
-    const headX = segmentsX[0];
-    const headY = segmentsY[0];
     
     // --- 壁の更新と当たり判定処理 ---
     
@@ -171,29 +169,28 @@ function update() {
         spawnWall();
     }
     
-    // 後ろからループを回して壁を移動（配列から削除する処理があるため後ろから回す）
+    // 後ろからループを回して壁を移動
     for (let i = walls.length - 1; i >= 0; i--) {
         let wall = walls[i];
         
-        // 1フレーム前の壁のY座標を記録しておく（すり抜け防止用）
+        // 1フレーム前の壁のY座標を記録しておく
         const previousWallY = wall.y;
         
-        // 変更点：統一したゲームスピードを使って壁を迫らせる
+        // 統一したゲームスピードを使って壁を迫らせる
         wall.y += gameSpeed;
         
         const currentWallBottom = wall.y + wallHeight;
         
-        // すり抜けバグを防止するためのSweep（軌跡）当たり判定
-        // 1フレーム前から現在のフレームまでの間に、プレイヤーの頭のY座標が含まれているかを確認
-        if (headY >= previousWallY && headY <= currentWallBottom) {
-            // X座標が穴の範囲外（壁の部分）ならゲームオーバー
-            if (headX < wall.gapX || headX > wall.gapX + gapWidth) {
+        // すり抜けバグを防止するためのSweep当たり判定
+        if (startY >= previousWallY && startY <= currentWallBottom) {
+            // X座標が穴の範囲外ならゲームオーバー
+            if (startX < wall.gapX || startX > wall.gapX + gapWidth) {
                 gameState = 'gameover';
             }
         }
         
-        // スコア加算：プレイヤーの頭が壁を無事に通り過ぎたら（1回のみ）
-        if (!wall.passed && headY < wall.y) {
+        // スコア加算：プレイヤーの頭が壁を無事に通り過ぎたら
+        if (!wall.passed && segmentsY[0] < wall.y) {
             wall.passed = true;
             score++;
         }
@@ -204,12 +201,12 @@ function update() {
         }
     }
     
-    // --- 既存の壁判定（左右の画面外に出たらゲームオーバー） ---
-    if (segmentsX[0] < 0 || segmentsX[0] > canvas.width) {
+    // --- 既存の壁判定 ---
+    if (startX < 0 || startX > canvas.width) {
         gameState = 'gameover';
         // 画面外に完全に消えないよう、壁際で座標を固定する
-        if (segmentsX[0] < 0) segmentsX[0] = 0;
-        if (segmentsX[0] > canvas.width) segmentsX[0] = canvas.width;
+        if (startX < 0) segmentsX[0] = 0;
+        if (startX > canvas.width) segmentsX[0] = canvas.width;
     }
 }
 
@@ -222,7 +219,7 @@ function draw() {
     ctx.fillStyle = '#1a1a1a';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // --- スコアの描画（画面中央やや上部に数字のみを表示） ---
+    // --- スコアの描画（画面中央やや上部に数字を表示） ---
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 30px sans-serif';
     ctx.textAlign = 'center';
@@ -248,9 +245,9 @@ function draw() {
     ctx.lineJoin = 'round';      // 線の結合部を丸くする
     
     // 線の始点を頭の座標に設定
-    ctx.moveTo(segmentsX[0], segmentsY[0]);
+    ctx.moveTo(startX, startY);
     
-    // 二次ベジェ曲線（quadraticCurveTo）を使い、各パーツの間を滑らかな曲線で繋ぐ
+    // 二次ベジェ曲線を使い、各パーツの間を滑らかな曲線で繋ぐ
     for (let i = 0; i < segmentCount - 1; i++) {
         // 現在のパーツと次のパーツの中点を計算し、そこを通過点とする
         const midX = (segmentsX[i] + segmentsX[i + 1]) / 2;
@@ -264,7 +261,7 @@ function draw() {
     ctx.lineTo(segmentsX[segmentCount - 1], segmentsY[segmentCount - 1]);
     ctx.stroke();
 
-    // テキスト描画（状態に応じたメッセージ）
+    // テキスト描画
     if (gameState === 'start') {
         ctx.fillStyle = '#ffffff';
         ctx.font = '20px sans-serif';
