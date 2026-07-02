@@ -190,7 +190,7 @@ function update() {
         }
         
         // スコア加算：プレイヤーの頭が壁を無事に通り過ぎたら
-        if (!wall.passed && segmentsY[0] < wall.y) {
+        if (!wall.passed && startY < wall.y && gameState == 'playing') {
             wall.passed = true;
             score++;
         }
