@@ -4,16 +4,16 @@ const ctx = canvas.getContext('2d');
 // プレイヤーを構成するパーツの総数
 const segmentCount = 30;
 
-// X座標とY座標を完全に別の配列として管理する
+// X座標とY座標を別の配列として管理する
 const segmentsX = [];
 const segmentsY = [];
 
 // 蛇の速度と壁の速度を1つの変数に統合
-let gameSpeed = 5; // 蛇の進むスピードと壁の流れるスピードを統括
+let gameSpeed = 5;
 
 // 速度、加速度、ゲーム状態の変数
 let velocityX = 0;
-let accelerationX = 0.75; // 1フレームあたりの速度変化量
+let accelerationX = 0.75;
 
 // 状態管理: 'start' (開始待ち), 'playing' (プレイ中), 'gameover' (ゲームオーバー)
 let gameState = 'start';
